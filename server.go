@@ -132,11 +132,13 @@ func main() {
 	Filesystem: nil,
     }))
 
-    e.POST("/create_room", func(c echo.Context) error {
+    api := e.Group("/api")
+
+    api.POST("/create_room", func(c echo.Context) error {
 	return createRoom(c, db)
     })
 
-    e.GET("/get_room", func(c echo.Context) error {
+    api.GET("/get_room", func(c echo.Context) error {
 	return getRoom(c, db)
     })
    
