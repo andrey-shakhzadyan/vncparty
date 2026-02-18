@@ -1,0 +1,32 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+    themes: dark, retro, fantasy;
+};
+
+.no-arrow::-webkit-inner-spin-button,
+.no-arrow::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.no-arrow {
+    -moz-appearance: textfield;
+}
+
+.loadingstatic {
+
+    background: 
+      repeating-radial-gradient(#000 0 0.0001%,#fff 0 0.0002%) 50% 0/2500px 2500px,
+      repeating-conic-gradient(#000 0 0.0001%,#fff 0 0.0002%) 60% 60%/2500px 2500px;
+    background-blend-mode: difference;
+    animation: b .2s infinite alternate;
+}
+@keyframes b{
+    100% {background-position: 50% 0, 60% 50%}
+}
+
+.interactionblocker {
+    width: 121vh;
+    height: 85.25vh;
+    background: none;
+}

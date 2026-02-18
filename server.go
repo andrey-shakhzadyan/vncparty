@@ -2,13 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"net/http"
-	"os"
-	"strconv"
-	"time"
-
-	//	"github.com/gorilla/websocket"
 	"github.com/go-playground/validator"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
@@ -17,12 +10,20 @@ import (
 	"github.com/pretty66/websocketproxy"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	//	"github.com/labstack/echo/v5/middleware"
+	//	"github.com/r3labs/sse/v2"
+	"github.com/ziflex/lecho/v3"
+	"log"
+	"net/http"
+	"os"
+	"strconv"
+	"time"
 )
 
 type (
 	Room struct {
 		ID        uuid.UUID `gorm:"type:uuid;default:gen_random_uuid()"`
-		Name      string    `form:"room_name" json:"room_name,omitempty" validate:"required,alphanumunicode"`
+		Name      string    `form:"room_name" json:"room_name,omitempty" validate:"required,alphanumunicode,max=20"`
 		VNCAddr   string    `form:"server_addr" json:"server_addr,omitempty" validate:"required,ip|url"`
 		Port      uint16    `gorm:"type:uint;default:15901" form:"server_port" json:"server_port,omitempty" validate:"number,gte=0,lte=65535"`
 		CreatedAt time.Time
@@ -64,19 +65,12 @@ func createRoom(c echo.Context, db *gorm.DB, ws *echo.Group) error { // change e
 			"message": err.Error(),
 		})
 	}
-	//var err error
-	// WSProxies[room.ID.String()] = new(websocketproxy.WebsocketProxy)
-	// WSProxies[room.ID.String()], err = websocketproxy.NewProxy("ws://"+room.VNCAddr+":"+strconv.FormatUint(uint64(room.Port), 10), func(r *http.Request) error {
-	// 	r.Header.Set("Origin", room.VNCAddr+strconv.FormatUint(uint64(room.Port), 10))
-	// 	return nil
-	// })
 
 	wsproxy, err := websocketproxy.NewProxy("ws://"+room.VNCAddr+":"+strconv.FormatUint(uint64(room.Port), 10), func(r *http.Request) error {
+
 		r.Header.Set("Origin", room.VNCAddr+strconv.FormatUint(uint64(room.Port), 10))
 		return nil
 	})
-
-
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]any{
@@ -85,9 +79,8 @@ func createRoom(c echo.Context, db *gorm.DB, ws *echo.Group) error { // change e
 	}
 
 	ws.GET("/roomproxy/"+room.ID.String(), func(c echo.Context) error {
-	    return echo.WrapHandler(wsproxy)(c)
+		return echo.WrapHandler(wsproxy)(c)
 	})
-
 
 	return c.JSON(http.StatusOK, map[string]any{
 		"room_id": room.ID,
@@ -124,6 +117,13 @@ func main() {
 	}
 	WSProxies = make(map[string]*websocketproxy.WebsocketProxy)
 	e := echo.New()
+	e.Logger = lecho.New(
+		os.Stdout,
+		lecho.WithTimestamp(),
+		lecho.WithCaller(),
+		lecho.WithPrefix("Web"),
+	)
+
 	e.Validator = &RoomValidator{validator: validator.New()}
 
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=America/New_York",
@@ -144,13 +144,11 @@ func main() {
 	}
 
 	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
-		//Skipper: nil,
-		Root:  "public",
-		Index: "index.html",
-		HTML5: true,
-		//Browse:     false,
+		Root:       "public",
+		Index:      "index.html",
+		HTML5:      true,
+		Browse:     false,
 		IgnoreBase: true,
-		//Filesystem: http.FS(public),
 	}))
 
 	e.GET("/room", func(c echo.Context) error {
@@ -160,9 +158,15 @@ func main() {
 	api := e.Group("/api")
 
 	e2 := echo.New()
+	e2.Logger = lecho.New(
+		os.Stdout,
+		lecho.WithTimestamp(),
+		lecho.WithCaller(),
+		lecho.WithPrefix("Proxy"),
+	)
 
 	ws := e2.Group("/ws")
-	
+
 	api.POST("/create_room", func(c echo.Context) error {
 		return createRoom(c, db, ws)
 	})
@@ -171,13 +175,6 @@ func main() {
 		return getRoom(c, db)
 	})
 
-
-	// ws.GET("/roomproxy/:id", func(c echo.Context) error {
-	//     wsproxy := WSProxies[c.QueryParam("id")] 
-	//     return echo.WrapHandler(wsproxy)(c)
-	// })
-	// e.Use(middleware.RequestLogger())
-	// e.Use(middleware.Recover())
 	go e2.Start(":1454")
 	e.Logger.Fatal(e.Start(":1323"))
 
