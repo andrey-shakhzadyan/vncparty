@@ -20,7 +20,7 @@ function App() {
     fetch("/api/get_room?uuid=" + uuid)
       .then((response) => response.json())
       .then((roomData) => {
-        setVncAddr("ws://localhost:1454/ws/roomproxy/" + uuid);
+        setVncAddr("ws://" + window.location.hostname + ":1454/ws/roomproxy/" + uuid);
         setRoomName(roomData.room_name);
         if (ref.current) {
           ref.current.connect();
