@@ -176,7 +176,6 @@ func main() {
 	})
 
 	go e2.Start(":1454")
-	e.Logger.Fatal(e.StartTLS(":1323", "cert.pem", "key.pem"))
-	//e.Logger.Fatal(e.Start(":1323"))
+	e.Logger.Fatal(e.Start(":1323"))
 
 }
