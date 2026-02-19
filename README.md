@@ -1,6 +1,9 @@
 ![vncparty logo](./logo.png)
 ## vncparty
 shareable vnc connections in the browser
+
+[Live demo](http://143.110.199.41:1323/room?uuid=50d8c3a7-609a-40f5-9b32-d6cb9f0931be) user/pass: demo/demo
+
 ### Build & Run
 * Configure a fresh Postgres database
 * Configure .env ([example](./.env.default))
